@@ -9,14 +9,10 @@
 */
 bool do_system(const char *cmd)
 {
-
-/*
- * TODO  add your code here
- *  Call the system() function with the command set in the cmd
- *   and return a boolean true if the system() call completed with success
- *   or false() if it returned a failure
-*/
-
+    int ret_code = system(cmd);
+    if (ret_code != 0) {
+        return false;
+    }
     return true;
 }
 
@@ -49,19 +45,28 @@ bool do_exec(int count, ...)
     // and may be removed
     command[count] = command[count];
 
-/*
- * TODO:
- *   Execute a system command by calling fork, execv(),
- *   and wait instead of system (see LSP page 161).
- *   Use the command[0] as the full path to the command to execute
- *   (first argument to execv), and use the remaining arguments
- *   as second argument to the execv() command.
- *
-*/
+    int status;
+    int pid;
+    const char* argsv = &command[1];
+
+    pid = fork();
+    if (pid == -1) {
+        return -1;
+    }
+    else if (pid == 0) {
+        execv(command[0], argsv);
+        exit(-1);
+    }
+
+    if (waitpid(pid, &status, 0) == -1) {
+        return false;
+    }
+    else if (WIFEXITED(status)) {
+        return true;
+    }
 
     va_end(args);
-
-    return true;
+    return false;
 }
 
 /**
