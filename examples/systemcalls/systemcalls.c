@@ -1,4 +1,11 @@
 #include "systemcalls.h"
+#include <stdlib.h>
+#define _XOPEN_SOURCE
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -47,14 +54,13 @@ bool do_exec(int count, ...)
 
     int status;
     int pid;
-    const char* argsv = &command[1];
 
     pid = fork();
     if (pid == -1) {
         return -1;
     }
     else if (pid == 0) {
-        execv(command[0], argsv);
+        execv(command[0], command);
         exit(-1);
     }
 
