@@ -6,6 +6,7 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -57,7 +58,7 @@ bool do_exec(int count, ...)
 
     pid = fork();
     if (pid == -1) {
-        return -1;
+        return false;
     }
     else if (pid == 0) {
         execv(command[0], command);
@@ -103,6 +104,19 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+    pid_t pid;
+    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+    if (fd < 0) { perror("open"); abort(); }
+    switch (pid = fork()) {
+    case -1: perror("fork"); abort();
+    case 0:
+        if (dup2(fd, 1) < 0) { perror("dup2"); abort(); }
+        close(fd);
+        execvp(command[0], command); perror("execvp"); abort();
+    default:
+        close(fd);
+        /* do whatever the parent wants to do. */
+    }
 
     va_end(args);
 
