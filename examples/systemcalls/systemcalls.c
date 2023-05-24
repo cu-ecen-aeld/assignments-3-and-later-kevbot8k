@@ -106,16 +106,28 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
 */
     pid_t pid;
     int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
-    if (fd < 0) { perror("open"); abort(); }
+
+    if (fd < 0) { 
+        perror("open"); 
+        abort(); 
+    }
+
     switch (pid = fork()) {
-    case -1: perror("fork"); abort();
-    case 0:
-        if (dup2(fd, 1) < 0) { perror("dup2"); abort(); }
-        close(fd);
-        execvp(command[0], command); perror("execvp"); abort();
-    default:
-        close(fd);
-        /* do whatever the parent wants to do. */
+        case -1: 
+            perror("fork"); 
+            abort();
+        case 0:
+            if (dup2(fd, 1) < 0) {
+                perror("dup2"); 
+                abort(); 
+            }
+            close(fd);
+            
+            execvp(command[0], command); 
+            perror("execvp"); 
+            abort();
+        default:
+            close(fd);
     }
 
     va_end(args);
