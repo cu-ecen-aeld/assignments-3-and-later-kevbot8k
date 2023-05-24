@@ -107,7 +107,8 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *
 */
     pid_t pid;
-    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0666);
+    int status;
+    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
 
     if (fd < 0) { 
         perror("open"); 
@@ -133,7 +134,12 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
             close(fd);
     }
 
+    pid_t exited_child_pid = waitpid(pid, &status, 0);
+    if (exited_child_pid == -1) {
+        return false;
+    }
+
     va_end(args);
 
-    return true;
+    return WEXITSTATUS(status) == 0;
 }
