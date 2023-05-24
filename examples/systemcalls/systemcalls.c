@@ -54,26 +54,28 @@ bool do_exec(int count, ...)
     command[count] = command[count];
 
     int status;
-    int pid;
+    pid_t pid;
 
     pid = fork();
+
     if (pid == -1) {
+        perror("fork failed");
         return false;
     }
     else if (pid == 0) {
         execv(command[0], command);
-        exit(-1);
+        perror("execv should not return from child process");
+        exit(1);
     }
 
-    if (waitpid(pid, &status, 0) == -1) {
+    pid_t exited_child_pid = waitpid(pid, &status, 0);
+    if (exited_child_pid == -1) {
         return false;
-    }
-    else if (WIFEXITED(status)) {
-        return true;
     }
 
     va_end(args);
-    return false;
+
+    return WEXITSTATUS(status) == 0;
 }
 
 /**
@@ -105,7 +107,7 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *
 */
     pid_t pid;
-    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0666);
 
     if (fd < 0) { 
         perror("open"); 
@@ -113,16 +115,17 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     }
 
     switch (pid = fork()) {
-        case -1: 
+        case -1:
             perror("fork"); 
             abort();
         case 0:
+            /* child process since pid == 0*/
             if (dup2(fd, 1) < 0) {
                 perror("dup2"); 
                 abort(); 
             }
             close(fd);
-            
+
             execvp(command[0], command); 
             perror("execvp"); 
             abort();
