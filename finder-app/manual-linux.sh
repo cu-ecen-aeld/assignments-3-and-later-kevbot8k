@@ -12,6 +12,7 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
+SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
 
 if [ $# -lt 1 ]
 then
@@ -108,15 +109,15 @@ cp writer ${OUTDIR}/rootfs/home
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
 
-cp finder.sh confg/username.txt finder-test.sh ${OUTDIR}/rootfs/home
+cp finder.sh conf/username.txt finder-test.sh ${OUTDIR}/rootfs/home
 cp autorun-qemu.sh ${OUTDIR}/rootfs/home
 
 
 # TODO: Chown the root directory
-
+cd ${OUTDIR}/rootfs
 sudo chown -R root:root ${OUTDIR}/rootfs/*
 # TODO: Create initramfs.cpio.gz
 
-find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/intramfs.cpio
-cd ..
-gaip -f intramfs.cpio
+find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/rootfs/initramfs.cpio
+cd ${OUTDIR}
+gzip -f ${OUTDIR}/rootfs/initramfs.cpio
