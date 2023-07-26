@@ -35,16 +35,16 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     echo "Checking out version ${KERNEL_VERSION}"
     git checkout ${KERNEL_VERSION}
 
-    # TODO: Add your kernel build steps here
+    #  Add your kernel build steps here
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} mrproper
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} modules
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
 
 fi
 
 echo "Adding the Image in outdir"
+cp ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ${OUTDIR}/Image
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
@@ -54,7 +54,7 @@ then
     sudo rm  -rf ${OUTDIR}/rootfs
 fi
 
-# TODO: Create necessary base directories
+# Create necessary base directories
 
 echo "creating root directory"
 mkdir ${OUTDIR}/rootfs
@@ -109,15 +109,16 @@ cp writer ${OUTDIR}/rootfs/home
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
 
-cp finder.sh conf/username.txt finder-test.sh ${OUTDIR}/rootfs/home
+cp finder.sh finder-test.sh ${OUTDIR}/rootfs/home
+cp -r conf ${OUTDIR}/rootfs/home
+cp -r ../conf ${OUTDIR}/rootfs
 cp autorun-qemu.sh ${OUTDIR}/rootfs/home
 
 
 # TODO: Chown the root directory
 cd ${OUTDIR}/rootfs
 sudo chown -R root:root ${OUTDIR}/rootfs/*
-# TODO: Create initramfs.cpio.gz
 
-find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/rootfs/initramfs.cpio
-cd ${OUTDIR}
-gzip -f ${OUTDIR}/rootfs/initramfs.cpio
+# TODO: Create initramfs.cpio.gz
+find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
+gzip -f ${OUTDIR}/initramfs.cpio
